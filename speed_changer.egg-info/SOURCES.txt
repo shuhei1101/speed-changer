@@ -1,0 +1,11 @@
+setup.py
+speed_changer/__init__.py
+speed_changer/config.py
+speed_changer/main.py
+speed_changer/mp3_speed_changer.py
+speed_changer/speed.py
+speed_changer.egg-info/PKG-INFO
+speed_changer.egg-info/SOURCES.txt
+speed_changer.egg-info/dependency_links.txt
+speed_changer.egg-info/top_level.txt
+tests/test_speed.py

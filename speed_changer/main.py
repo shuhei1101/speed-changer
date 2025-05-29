@@ -8,6 +8,9 @@ from speed_changer.mp3_speed_changer import MP3SpeedChanger
 
 async def main():
     """速度変更処理のメイン関数"""
+    print("速度変更処理を開始します。")
+    print("準備中...")
+
     # targetディレクトリからファイルを読み込む(mp3, mp4)
     input_files = pathlib.Path(config.INPUT_DIR).glob("*.mp3")
 
@@ -22,13 +25,19 @@ async def main():
     # 速度を変更する
     speed_changer = MP3SpeedChanger(Speed(config.SPEED))
 
-    # 処理対象のファイル数を表示
-    print(f"{len(input_files)}個のファイルを処理します...")
+    completed = 0
+
+    def on_success(output: str):
+        nonlocal completed
+        completed += 1
+        print(f"進捗: {completed}/{total}, ファイル: {output}")
+
+    def on_error(error: Exception, input_file: str):
+        print(f"進捗: {completed}/{total}, ファイル: {input_file}, エラー: {error}")
 
     tasks = []
     # 各ファイルの処理を非同期タスクとして追加
     for input_file in input_files:
-        print(f"{input_file}の処理を開始...")
         output_dir = config.OUTPUT_DIR
         # 出力ディレクトリが存在しない場合は作成
         os.makedirs(output_dir, exist_ok=True)
@@ -37,14 +46,22 @@ async def main():
         basename = os.path.splitext(os.path.basename(input_file))[0]
         output_file = os.path.join(output_dir, f"{basename}_{config.SPEED}x.mp3")
 
+        if os.path.exists(output_file):
+            print(f"スキップ: 出力ファイル {output_file} は既に存在します。")
+            continue
+
         # 速度変更処理を非同期タスクとして追加
         tasks.append(
-            asyncio.create_task(speed_changer.change_speed(input_file, output_file))
+            asyncio.create_task(
+                speed_changer.change_speed(
+                    input_file, output_file, on_success, on_error
+                )
+            )
         )
-        print(f"{input_file}の処理が完了しました。出力先: {output_file}")
+    total = len(tasks)
 
     # 全てのタスクを実行
-    await asyncio.gather(*tasks)
+    _ = await asyncio.gather(*tasks)
     print("全ての処理が完了しました。")
 
 
